@@ -1,0 +1,25 @@
+{
+  "users": [
+    {
+      "daily_task": {
+        "watch": 1,
+        "share": 1,
+        "coin_num": -1
+      },
+      "sign": {
+        "live": 1,
+        "comics": 1
+      },
+      "charge": {
+        "date": 1,
+        "user": -1
+      },
+      "cookie": {
+        "DedeUserID": "",
+        "DedeUserID__ckMd5": "",
+        "SESSDATA": "",
+        "bili_jct": ""
+      }
+    }
+  ]
+}
