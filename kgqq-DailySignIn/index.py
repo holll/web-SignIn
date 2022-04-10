@@ -104,10 +104,13 @@ def main(event, context):
         config = json.load(f)
     # 设置环境变量uid，提供给send函数读取
     os.environ['uid'] = config['uid']
-    old_num = get_UserInfo(config['cookies'])
-    do_task(config['cookies'])
-    new_num = get_UserInfo(config['cookies'])
-    send('获得%d朵鲜花，账户总计%d朵鲜花' % ((new_num - old_num), new_num))
+    i = 0
+    for cookie in config['cookies']:
+        old_num = get_UserInfo(cookie)
+        do_task(cookie)
+        new_num = get_UserInfo(cookie)
+        send('用户%d获得%d朵鲜花，账户总计%d朵鲜花' % (i + 1, new_num - old_num, new_num))
+        i += 1
 
 
 if __name__ == '__main__':
