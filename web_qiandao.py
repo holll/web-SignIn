@@ -8,16 +8,21 @@ import requests
 import urllib3
 from bs4 import BeautifulSoup
 
+# 忽略警告
 urllib3.disable_warnings()
+# 部分网站服务器在国外，为避免长时间无响应，设定最大超时时间
 timeout = 15
+# Todo 从config读取
 os.environ['uid'] = 'YangYiFan'
 system = platform.system()
 
-# 占位代码
+# 部分代码在exec函数中执行，因此主文件会显示未使用的import
 BeautifulSoup('', 'html.parser')
 time.sleep(0)
 re.search('', '')
 # 占位结束
+
+# Todo 部分网站要求cookie与user-agent匹配 放在config中自定义
 headers = {
     'user-agent': 'edg'
 }
@@ -35,7 +40,6 @@ class web:
     def __init__(self, name, url, cookie, method, data, params, cmd, extra):
         self.name = name
         self.url = url
-        print(cookie)
         self.cookie = json.loads(cookie.replace("'", '"')) if len(cookie) != 0 else ''
         self.method = method
         self.data = json.loads(data.replace("'", '"')) if data is not None else None
