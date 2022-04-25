@@ -1,10 +1,20 @@
 import json
+import logging
 import os
+import platform
 import time
 
 import requests
 
 from API import *
+
+# log格式
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+# 配置文件路径
+config_path = './config.json'
+if platform.system() == 'Linux':
+    config_path = '/www/wwwroot/download/conf/kgqq.json'
 
 
 def send(content, url=None):
@@ -13,7 +23,7 @@ def send(content, url=None):
 
 
 # 获取用户信息
-def get_UserInfo(cookies):
+def get_userinfo(cookies):
     response = requests.get(get_UserInfo_url % cookies['uid'], cookies=cookies).json()
     return response['data']['profile.getProfile']['uFlowerNum']  # 返回当前鲜花数
 
@@ -24,33 +34,24 @@ def singin(cookies):
         response = requests.get(singin_url % (cookies['uid'], t_iShowEntry), cookies=cookies).json()
         if response['data']['task.signinGetAward']['total'] == 1:
             awards = response['data']['task.signinGetAward']['awards'][0]
-            print(awards)
-            print('签到获得%d朵鲜花' % int(awards['num']))
+            logging.debug(awards)
+            logging.info('签到获得%d朵鲜花' % int(awards['num']))
 
 
 # 每日抽奖
-def lottery(cookies):
+def lottery_d(cookies):
     for t_type in ['1', '2']:
         response = requests.get(lottery_url % (cookies['uid'], t_type), cookies=cookies).json()
         if response['data']['task.getLottery']['total'] == 1:
             awards = response['data']['task.getLottery']['awards']
-            print('抽奖获得%d个%s' % (int(awards['num']), awards['desc']))
+            logging.info('抽奖获得%d个%s' % (int(awards['num']), awards['desc']))
 
 
-# 7日签到抽奖
-def lottery7(cookies):
-    response = requests.get(lottery7_url % (cookies['uid']), cookies=cookies).json()
+def lottery(url, cookies):
+    response = requests.get(url % (cookies['uid']), cookies=cookies).json()
     if response['data']['task.getLottery']['total'] == 1:
         awards = response['data']['task.getLottery']['awards']
-        print('抽奖获得%d个%s' % (int(awards['num']), awards['desc']))
-
-
-# 不明抽奖
-def lottery0(cookies):
-    response = requests.get(lottery7_url % (cookies['uid']), cookies=cookies).json()
-    if response['data']['task.getLottery']['total'] == 1:
-        awards = response['data']['task.getLottery']['awards']
-        print('抽奖获得%d个%s' % (int(awards['num']), awards['desc']))
+        logging.info('抽奖获得%d个%s' % (int(awards['num']), awards['desc']))
 
 
 # 音乐邮局
@@ -64,7 +65,7 @@ def music_post_office(cookies):
     for g_tk_openkey in range(16):
         response = requests.get(url=post_office_url % (cookies['uid'], g_tk_openkey), cookies=cookies)
         if response.json()['code'] == 1000:
-            print(response.json()['msg'])
+            logging.debug(response.json()['msg'])
             return response.json()['msg']
         vct_music_cards = response.json()['data']['message.batch_get_music_cards']['vctMusicCards']
         vct_music_cards_list = sorted(vct_music_cards, key=lambda x: x["stReward"]["uFlowerNum"], reverse=True)[0]
@@ -77,7 +78,7 @@ def music_post_office(cookies):
             json_data = '{"uInteractiveType":0,"uRewardType":0,"uFlowerNum":10}'
         else:
             json_data = None
-            print('u_flower_num:%d' % u_flower_num)
+            logging.debug('u_flower_num:%d' % u_flower_num)
         params['t_strKey'] = key
         params['t_strUgcId'] = ugc_id
         params['t_stReward:object'] = json_data
@@ -89,26 +90,26 @@ def music_post_office(cookies):
 def do_task(cookies):
     singin(cookies)
     time.sleep(1)
-    lottery(cookies)
+    lottery_d(cookies)
     time.sleep(1)
-    lottery0(cookies)
+    lottery(lottery7_url, cookies)
     time.sleep(1)
-    lottery7(cookies)
+    lottery(lottery0_url, cookies)
     time.sleep(1)
     music_post_office(cookies)
 
 
 def main(event, context):
     # 读取配置文件，初始化所有账号
-    with open('./config.json', 'r', encoding='utf-8') as f:
+    with open(config_path, 'r', encoding='utf-8') as f:
         config = json.load(f)
     # 设置环境变量uid，提供给send函数读取
     os.environ['uid'] = config['uid']
     i = 0
     for cookie in config['cookies']:
-        old_num = get_UserInfo(cookie)
+        old_num = get_userinfo(cookie)
         do_task(cookie)
-        new_num = get_UserInfo(cookie)
+        new_num = get_userinfo(cookie)
         send('用户%d获得%d朵鲜花，账户总计%d朵鲜花' % (i + 1, new_num - old_num, new_num))
         i += 1
 

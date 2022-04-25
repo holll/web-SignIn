@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import platform
 import re
@@ -15,7 +16,13 @@ timeout = 15
 # Todo 从config读取
 os.environ['uid'] = 'YangYiFan'
 system = platform.system()
-
+# log格式
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+# 配置文件路径
+config_path = './config.json'
+if platform.system() == 'Linux':
+    config_path = '/www/wwwroot/download/conf/web-sign.json'
 # 部分代码在exec函数中执行，因此主文件会显示未使用的import
 BeautifulSoup('', 'html.parser')
 time.sleep(0)
@@ -50,10 +57,10 @@ class web:
         web.count += 1
 
     def __str__(self):
-        # print(self.name)
-        print(self.data)
-        print(self.params)
-        # print(self.extra)
+        # logging.debug(self.name)
+        logging.debug(self.data)
+        logging.debug(self.params)
+        # logging.debug(self.extra)
 
     def my_requests(self):
         if self.method == 'get':
@@ -63,7 +70,7 @@ class web:
             response = requests.post(self.url, headers=headers, cookies=self.cookie, params=self.params,
                                      data=self.data, timeout=timeout, verify=False)
         else:
-            print('requests方法错误' + self.method)
+            logging.warning('requests方法错误' + self.method)
             response = None
         return response
 
@@ -71,24 +78,24 @@ class web:
         try:
             response = self.my_requests()
             if system == 'Windows':
-                print(response.content.decode('utf-8'))
+                logging.debug(response.content.decode('utf-8'))
             if self.extra is not None:
                 exec(self.extra)
                 response = eval('rep')
         except Exception as e:
-            print('错误类型是', e.__class__.__name__)
-            print('错误明细是', e)
+            logging.warning('错误类型是', e.__class__.__name__)
+            logging.warning('错误明细是', e)
             self.info = self.name + '：签到异常'
-            print(self.info)
+            logging.debug(self.info)
             return 0
         try:
             self.info = eval(self.cmd)
         except Exception as e:
-            print('错误类型是', e.__class__.__name__)
-            print('错误明细是', e)
+            logging.warning('错误类型是', e.__class__.__name__)
+            logging.warning('错误明细是', e)
             self.info = self.name + '：代码异常'
-            print(response.text)
-        print(self.info)
+            logging.debug(response.text)
+        logging.info(self.info)
 
 
 def main_handler(event, context):
@@ -100,7 +107,7 @@ def main_handler(event, context):
         return locals()[parma]
 
     desc = ''
-    with open('./config.json', encoding='utf-8') as f:
+    with open(config_path, encoding='utf-8') as f:
         data = json.load(f)
     i = 1
     for _ in data['web']:
@@ -115,12 +122,12 @@ def main_handler(event, context):
         locals()['s' + str(i)] = web(name, url, cookie, method, is_default(_, 'data'), is_default(_, 'parmas'), cmd,
                                      is_default(_, 'extra'))
         i += 1
-    print('共载入%d个网站' % web.count)
+    logging.info('共载入%d个网站' % web.count)
     delay = 1
     i = 0
     for j in range(web.count):
         locals()['s' + str(j + 1)].run()
-    print('签到完成')
+    logging.info('签到完成')
     for j in range(web.count):
         desc = desc + locals()['s' + str(j + 1)].info + '\n'
         del locals()['s' + str(j + 1)]

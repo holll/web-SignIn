@@ -1,6 +1,8 @@
 import datetime
 import json
+import logging
 import os
+import platform
 import time
 
 import pytz
@@ -8,7 +10,14 @@ import requests
 
 import API
 
-UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)'
+UserAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36'
+# log格式
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
+# 配置文件路径
+config_path = './config.json'
+if platform.system() == 'Linux':
+    config_path = '/www/wwwroot/download/conf/bilibili.json'
 
 
 def send(content, url=None):
@@ -46,6 +55,7 @@ class User:
                 'level_exp': '%d/%d' % (level_info['current_exp'], level_info['next_exp']),
                 'vipType': data['vipType']
             }
+            logging.debug(userInfo)
             return {'status': True, 'userInfo': userInfo}
         else:
             return {'status': False, 'message': rep['message']}
@@ -62,10 +72,10 @@ class User:
             data = {'aid': info['aid'], 'csrf': os.getenv('bili_jct')}
             rep = self.S.post(API.video_share, data=data).json()
             if rep['code'] == 0:
-                print('分享视频[%s]成功' % info['title'])
+                logging.info('分享视频[%s]成功' % info['title'])
                 return '分享视频[%s]成功' % info['title']
             else:
-                print('分享视频[%s]失败,因为%s' % (info['title'], rep['message']))
+                logging.info('分享视频[%s]失败,因为%s' % (info['title'], rep['message']))
                 return '分享视频[%s]失败,因为%s' % (info['title'], rep['message'])
 
         # 从热门视频中选择需要观看的视频
@@ -88,6 +98,9 @@ class User:
             'auto_continued_play': 0,
             'start_ts': timestamp
         }
+        logging.debug(data)
+        # Todo 疑似接口有问题，暂不开启观看视频
+        return 0
         rep = self.S.post(API.video_heartbeat, data=data).json()
         if want_share == 1:
             is_share = share_video(info)
@@ -100,10 +113,10 @@ class User:
             data['play_type'] = 0
             rep = self.S.post(API.video_heartbeat, data=data).json()
             if rep['code'] == 0:
-                print('观看视频成功')
+                logging.info('观看视频成功')
                 return '观看视频成功，' + is_share
             else:
-                print('观看视频失败')
+                logging.info('观看视频失败')
                 return '观看视频失败，' + is_share
 
     # 直播签到
@@ -113,12 +126,12 @@ class User:
         if rep['code'] == 0:
             # 签到成功
             data = rep['data']
-            print('直播签到成功，获得奖励:%s，%s，本月已签到%d/%d天' % (
+            logging.info('直播签到成功，获得奖励:%s，%s，本月已签到%d/%d天' % (
                 data['text'], data['specialText'], data['hadSignDays'], data['allDays']))
             return '直播签到成功，获得奖励:%s，%s，本月已签到%d/%d天' % (
                 data['text'], data['specialText'], data['hadSignDays'], data['allDays'])
         else:
-            print('直播签到失败,因为%s' % rep['message'])
+            logging.info('直播签到失败,因为%s' % rep['message'])
             return '直播签到失败,因为%s' % rep['message']
 
     # 漫画签到
@@ -134,16 +147,15 @@ class User:
         data = {'platform': 'android'}
         rep = self.S.post(API.comics_sign, data=data).json()
         if rep['code'] == 0:
-            print('漫画签到成功')
-            p = comics_checkin_info()
-            print('已经连续签到%d天' % p['day_count'])
-            return '签到成功，已连续签到%d天' % p['day_count']
+            msg = '漫画签到成功，已经连续签到%d天' % comics_checkin_info()['day_count']
+            logging.info(msg)
+            return msg
         elif rep['code'] == 'invalid_argument':
-            print('漫画签到失败,因为重复签到了')
+            logging.info('漫画签到失败,因为重复签到了')
             return '漫画签到失败,因为重复签到了'
 
     def charge(self):
-        # 尝试领取B币券
+        # 获取B币券领取状态
         rep = self.S.get(API.free_Bb_info + '?csrf=' + os.getenv('bili_jct')).json()
         if rep['code'] == 0 and rep['data']['list'][0]['state'] == 0:
             # 有B币券，开始领取
@@ -153,7 +165,8 @@ class User:
             }
             rep = self.S.post(API.get_free_Bb, data=data).json()
             if rep['code'] == 0:
-                print('B币券领取成功，尝试充电')
+                logging.info('B币券领取成功，尝试充电')
+                logging.debug(rep)
                 if self.charge_user != -1:  # 指定充电用户uid，-1表示给自己充电
                     mid = self.charge_user
                 else:
@@ -167,6 +180,7 @@ class User:
                     'csrf': os.getenv('bili_jct')
                 }
                 rep = self.S.post(API.charge, data=data).json()
+                logging.debug(rep)
                 if rep['code'] == 0 and rep['data']['status'] == 4:
                     if self.charge_user == -1:
                         return '给自己充电5B币成功'
@@ -181,6 +195,7 @@ class User:
 
     def Inquire_exp(self):
         rep = self.S.get(API.daily_task_info).json()
+        logging.debug(rep)
         if rep['code'] == 0:
             today_exp = 0
             if rep['data']['login']:
@@ -233,40 +248,39 @@ class User:
             my_coins = userInfo['coins']
             my_exp = userInfo['level_exp']
             content = f'等级：lv{my_level}\n硬币：{my_coins}\n经验：{my_exp}\n'
-            print(content)
         else:
             content = 'Bilibili登录过期'
             send(content)
             return 0
-        print(content)
+        logging.info(content)
 
         msg = ''
         if self.daily_task['watch']:
-            print('正在观看视频...')
+            logging.info('正在观看视频...')
             msg += self.watch_video(self.daily_task['share']) + '\n'
         else:
-            print('不进行观看...')
+            logging.info('不进行观看...')
             msg += '不进行观看视频...\n'
         if self.sign['live']:
-            print('正在进行直播签到...')
+            logging.info('正在进行直播签到...')
             msg += self.live_broadcast_checkin() + '\n'
         else:
-            print('不启用直播签到...')
+            logging.info('不启用直播签到...')
             msg += '不启用直播签到...\n'
         if self.sign['comics']:
-            print('正在进行漫画签到...')
+            logging.info('正在进行漫画签到...')
             msg += self.comics_checkin() + '\n'
         else:
-            print('不启用漫画签到...')
+            logging.info('不启用漫画签到...')
             msg += '不启用漫画签到...\n'
         if self.need_charge == -1:
-            print('未开启充电')
+            logging.info('未开启充电')
             msg += '未开启充电\n'
         elif self.need_charge == int(datetime.datetime.now(pytz.timezone('PRC')).strftime("%d")):
-            print('正在进行充电')
+            logging.info('正在进行充电')
             msg += self.charge() + '\n'
         else:
-            print('未到充电日期%d号' % self.need_charge)
+            logging.info('未到充电日期%d号' % self.need_charge)
             msg += '未到充电日期%d号\n' % self.need_charge
         # 查询经验值
         today_exp = self.Inquire_exp()
@@ -274,7 +288,7 @@ class User:
             today_exp = 10 if today_exp == 0 else today_exp
             is_exp = '今日获取经验值%d，升级预计还需%d天' % (
                 today_exp, int((userInfo['next_exp'] - userInfo['current_exp']) / today_exp))
-            print(is_exp)
+            logging.info(is_exp)
         else:
             is_exp = '未获取到今日经验值'
         msg += is_exp
@@ -310,14 +324,14 @@ def get_hot_video():
     if res['code'] == 0:
         return res['data'][0]['bvid']
     else:
-        print(res['message'])
+        logging.debug(res['message'])
         send('获取热门视频出错：' + res['message'])
         return 0
 
 
 def main(event, context):
     # 读取配置文件，初始化所有账号
-    with open('./config.json', 'r', encoding='utf-8') as f:
+    with open(config_path, 'r', encoding='utf-8') as f:
         config = json.load(f)
     for user in config['users']:
         num = 1
