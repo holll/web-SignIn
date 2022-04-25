@@ -13,8 +13,6 @@ from bs4 import BeautifulSoup
 urllib3.disable_warnings()
 # 部分网站服务器在国外，为避免长时间无响应，设定最大超时时间
 timeout = 15
-# Todo 从config读取
-os.environ['uid'] = 'YangYiFan'
 system = platform.system()
 # log格式
 logging.basicConfig(level=logging.INFO,
@@ -110,6 +108,7 @@ def main_handler(event, context):
     with open(config_path, encoding='utf-8') as f:
         data = json.load(f)
     i = 1
+    os.environ['uid'] = data['uid']
     for _ in data['web']:
         name = _['name']
         url = _['url']

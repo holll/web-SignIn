@@ -333,6 +333,7 @@ def main(event, context):
     # 读取配置文件，初始化所有账号
     with open(config_path, 'r', encoding='utf-8') as f:
         config = json.load(f)
+    os.environ['uid'] = config['uid']
     for user in config['users']:
         num = 1
         daily_task = user['daily_task']
