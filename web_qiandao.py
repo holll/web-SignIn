@@ -15,7 +15,7 @@ urllib3.disable_warnings()
 timeout = 15
 system = platform.system()
 # log格式
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 # 配置文件路径
 config_path = './config.json'
@@ -32,11 +32,19 @@ headers = {
     'user-agent': 'edg'
 }
 
+webapi = 'http://49.234.133.60:8888/'
+
 
 def send(content, url=None):
-    headers['referer'] = 'gitee.com'
-    send_msg = 'https://gitee.com/hollc/code/raw/master/utils/send_msg.py'
-    exec(requests.get(send_msg, headers=headers).text)
+    parmas = {
+        'key': 'aword2020',
+        'uid': os.getenv('uid'),
+        'content': content,
+        'url': url
+    }
+    rep = requests.post(webapi + 'send', data=parmas).json()
+    if rep['code'] != 200:
+        logging.error(rep['msg'])
 
 
 class web:

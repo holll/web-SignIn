@@ -26,3 +26,5 @@ daily_task_info = 'http://api.bilibili.com/x/member/web/exp/reward'
 get_exp_count = 'https://www.bilibili.com/plus/account/exp.php'
 # 充电
 charge = 'https://api.bilibili.com/x/ugcpay/web/v2/trade/elec/pay/quick'
+# 风纪委员会基本数据
+jury = 'http://api.bilibili.com/x/credit/jury/jury'

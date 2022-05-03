@@ -12,17 +12,26 @@ import API
 
 UserAgent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.60 Safari/537.36'
 # log格式
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(filename)s[line:%(lineno)d] - %(levelname)s: %(message)s')
 # 配置文件路径
 config_path = './config.json'
 if platform.system() == 'Linux':
     config_path = '/www/wwwroot/download/conf/bilibili.json'
 
+webapi = 'http://49.234.133.60:8888/'
+
 
 def send(content, url=None):
-    send_msg = 'https://gitee.com/hollc/code/raw/master/utils/send_msg.py'
-    exec(requests.get(send_msg, headers={'User-Agent': 'edge', 'referer': 'gitee.com'}).text)
+    parmas = {
+        'key': 'aword2020',
+        'uid': os.getenv('uid'),
+        'content': content,
+        'url': url
+    }
+    rep = requests.post(webapi + 'send', data=parmas).json()
+    if rep['code'] != 200:
+        logging.error(rep['msg'])
 
 
 class User:
@@ -55,6 +64,7 @@ class User:
                 'level_exp': '%d/%d' % (level_info['current_exp'], level_info['next_exp']),
                 'vipType': data['vipType']
             }
+            self.mid = data['mid']
             logging.debug(userInfo)
             return {'status': True, 'userInfo': userInfo}
         else:
@@ -98,10 +108,8 @@ class User:
             'auto_continued_play': 0,
             'start_ts': timestamp
         }
-        logging.debug(data)
-        # Todo 疑似接口有问题，暂不开启观看视频
-        return 0
         rep = self.S.post(API.video_heartbeat, data=data).json()
+        logging.debug(rep)
         if want_share == 1:
             is_share = share_video(info)
         else:
@@ -333,8 +341,8 @@ def main(event, context):
     # 读取配置文件，初始化所有账号
     with open(config_path, 'r', encoding='utf-8') as f:
         config = json.load(f)
-    os.environ['uid'] = config['uid']
     for user in config['users']:
+        os.environ['uid'] = user['uid']
         num = 1
         daily_task = user['daily_task']
         sign = user['sign']
@@ -354,4 +362,5 @@ def main(event, context):
 
 
 if __name__ == '__main__':
+    os.environ['uid'] = 'YangYiFan'
     main(1, 1)

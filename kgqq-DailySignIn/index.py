@@ -16,10 +16,19 @@ config_path = './config.json'
 if platform.system() == 'Linux':
     config_path = '/www/wwwroot/download/conf/kgqq.json'
 
+webapi = 'http://49.234.133.60:8888/'
+
 
 def send(content, url=None):
-    send_msg = 'https://gitee.com/hollc/code/raw/master/utils/send_msg.py'
-    exec(requests.get(send_msg, headers={'User-Agent': 'edge', 'referer': 'gitee.com'}).text)
+    parmas = {
+        'key': 'aword2020',
+        'uid': os.getenv('uid'),
+        'content': content,
+        'url': url
+    }
+    rep = requests.post(webapi + 'send', data=parmas).json()
+    if rep['code'] != 200:
+        logging.error(rep['msg'])
 
 
 # 获取用户信息

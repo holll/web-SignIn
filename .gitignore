@@ -2,9 +2,14 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# config file
 config.json
+
+# test file
 *.test.py
 *.bak
+
 # C extensions
 *.so
 
