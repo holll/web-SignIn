@@ -85,22 +85,24 @@ class web:
             response = self.my_requests()
             if system == 'Windows':
                 logging.debug(response.content.decode('utf-8'))
+            else:
+                logging.debug(response.text)
             if self.extra is not None:
                 exec(self.extra)
                 response = eval('rep')
         except Exception as e:
-            logging.warning('错误类型是', e.__class__.__name__)
-            logging.warning('错误明细是', e)
+            logging.error('错误类型是', e.__class__.__name__)
+            logging.error('错误明细是', e)
             self.info = self.name + '：签到异常'
-            logging.debug(self.info)
+            logging.error(self.info)
             return 0
         try:
             self.info = eval(self.cmd)
         except Exception as e:
-            logging.warning('错误类型是', e.__class__.__name__)
-            logging.warning('错误明细是', e)
+            logging.error('错误类型是', e.__class__.__name__)
+            logging.error('错误明细是', e)
             self.info = self.name + '：代码异常'
-            logging.debug(response.text)
+            logging.error(response.text)
         logging.info(self.info)
 
 
