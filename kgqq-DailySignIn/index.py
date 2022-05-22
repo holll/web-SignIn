@@ -34,6 +34,8 @@ def send(content, url=None):
 # 获取用户信息
 def get_userinfo(cookies):
     response = requests.get(get_UserInfo_url % cookies['uid'], cookies=cookies).json()
+    logging.debug('get_userinfo:' + str(response))
+    time.sleep(0.5)
     return response['data']['profile.getProfile']['uFlowerNum']  # 返回当前鲜花数
 
 
@@ -41,7 +43,9 @@ def get_userinfo(cookies):
 def singin(cookies):
     for t_iShowEntry in ['1', '2', '4', '16', '128', '512']:
         response = requests.get(singin_url % (cookies['uid'], t_iShowEntry), cookies=cookies).json()
-        if response['data']['task.signinGetAward']['total'] == 1:
+        time.sleep(0.5)
+        logging.debug('singin:' + str(response))
+        if response['code'] == 0 and response['data']['task.signinGetAward']['total'] == 1:
             awards = response['data']['task.signinGetAward']['awards'][0]
             logging.debug(awards)
             logging.info('签到获得%d朵鲜花' % int(awards['num']))
@@ -51,14 +55,18 @@ def singin(cookies):
 def lottery_d(cookies):
     for t_type in ['1', '2']:
         response = requests.get(lottery_url % (cookies['uid'], t_type), cookies=cookies).json()
-        if response['data']['task.getLottery']['total'] == 1:
+        logging.debug('lottery_d:' + str(response))
+        time.sleep(0.5)
+        if response['code'] == 0 and response['data']['task.getLottery']['total'] == 1:
             awards = response['data']['task.getLottery']['awards']
             logging.info('抽奖获得%d个%s' % (int(awards['num']), awards['desc']))
 
 
 def lottery(url, cookies):
     response = requests.get(url % (cookies['uid']), cookies=cookies).json()
-    if response['data']['task.getLottery']['total'] == 1:
+    logging.debug('lottery:' + str(response))
+    time.sleep(0.5)
+    if response['code'] == 0 and response['data']['task.getLottery']['total'] == 1:
         awards = response['data']['task.getLottery']['awards']
         logging.info('抽奖获得%d个%s' % (int(awards['num']), awards['desc']))
 
@@ -72,11 +80,13 @@ def music_post_office(cookies):
         't_uUid': cookies['uid']
     }
     for g_tk_openkey in range(16):
-        response = requests.get(url=post_office_url % (cookies['uid'], g_tk_openkey), cookies=cookies)
-        if response.json()['code'] == 1000:
-            logging.debug(response.json()['msg'])
-            return response.json()['msg']
-        vct_music_cards = response.json()['data']['message.batch_get_music_cards']['vctMusicCards']
+        response = requests.get(url=post_office_url % (cookies['uid'], g_tk_openkey), cookies=cookies).json()
+        logging.debug('music_post_office:' + str(response))
+        time.sleep(0.5)
+        if response['code'] == 1000:
+            logging.debug(response['msg'])
+            return response['msg']
+        vct_music_cards = response['data']['message.batch_get_music_cards']['vctMusicCards']
         vct_music_cards_list = sorted(vct_music_cards, key=lambda x: x["stReward"]["uFlowerNum"], reverse=True)[0]
         ugc_id = vct_music_cards_list["strUgcId"]
         key = vct_music_cards_list["strKey"]
