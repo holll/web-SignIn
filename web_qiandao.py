@@ -27,11 +27,6 @@ time.sleep(0)
 re.search('', '')
 # 占位结束
 
-# Todo 部分网站要求cookie与user-agent匹配 放在config中自定义
-headers = {
-    'user-agent': 'edg'
-}
-
 webapi = 'http://49.234.133.60:8888/'
 
 
@@ -50,10 +45,11 @@ def send(content, url=None):
 class web:
     count = 0
 
-    def __init__(self, name, url, cookie, method, data, params, cmd, extra):
+    def __init__(self, name, url, cookie, headers, method, data, params, cmd, extra):
         self.name = name
         self.url = url
         self.cookie = json.loads(cookie.replace("'", '"')) if len(cookie) != 0 else ''
+        self.headers = json.loads(headers.replace("'", '"')) if headers is not None else None
         self.method = method
         self.data = json.loads(data.replace("'", '"')) if data is not None else None
         self.params = json.loads(params.replace("'", '"')) if params is not None else None
@@ -66,14 +62,15 @@ class web:
         # logging.debug(self.name)
         logging.debug(self.data)
         logging.debug(self.params)
+        logging.debug(self.headers)
         # logging.debug(self.extra)
 
     def my_requests(self):
         if self.method == 'get':
-            response = requests.get(self.url, headers=headers, cookies=self.cookie, params=self.params,
+            response = requests.get(self.url, headers=self.headers, cookies=self.cookie, params=self.params,
                                     timeout=timeout, verify=False)
         elif self.method == 'post':
-            response = requests.post(self.url, headers=headers, cookies=self.cookie, params=self.params,
+            response = requests.post(self.url, headers=self.headers, cookies=self.cookie, params=self.params,
                                      data=self.data, timeout=timeout, verify=False)
         else:
             logging.warning('requests方法错误' + self.method)
@@ -88,6 +85,7 @@ class web:
             else:
                 logging.debug(response.text)
             if self.extra is not None:
+                time.sleep(1)
                 exec(self.extra)
                 response = eval('rep')
         except Exception as e:
@@ -128,8 +126,9 @@ def main_handler(event, context):
         _.setdefault('extra', False)
         _.setdefault('parmas', False)
         _.setdefault('data', False)
-        locals()['s' + str(i)] = web(name, url, cookie, method, is_default(_, 'data'), is_default(_, 'parmas'), cmd,
-                                     is_default(_, 'extra'))
+        _.setdefault('headers', False)
+        locals()['s' + str(i)] = web(name, url, cookie, is_default(_, 'headers'), method, is_default(_, 'data'),
+                                     is_default(_, 'parmas'), cmd, is_default(_, 'extra'))
         i += 1
     logging.info('共载入%d个网站' % web.count)
     delay = 1
