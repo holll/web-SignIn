@@ -20,15 +20,25 @@ webapi = 'http://49.234.133.60:8888/'
 
 
 def send(content, url=None):
+    t = int(time.time())
     parmas = {
         'key': 'aword2020',
         'uid': os.getenv('uid'),
         'content': content,
-        'url': url
+        'url': url,
+        't': t,
+        'saltKey': generate_salt_key('aword2020', t)
     }
     rep = requests.post(webapi + 'send', data=parmas).json()
     if rep['code'] != 200:
         logging.error(rep['msg'])
+
+def generate_salt_key(_key, _t):
+    temp_key = _key + _t
+    for i in range(5):
+        temp_key = str(base64.b32encode(temp_key[:10].encode('utf-8')))
+    return temp_key
+
 
 
 # 获取用户信息
