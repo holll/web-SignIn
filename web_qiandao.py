@@ -1,3 +1,4 @@
+import base64
 import json
 import logging
 import os
@@ -27,7 +28,7 @@ time.sleep(0)
 re.search('', '')
 # 占位结束
 
-webapi = 'http://49.234.133.60:8888/'
+webapi = 'http://api.hollc.top/'
 
 
 def send(content, url=None):
@@ -45,10 +46,10 @@ def send(content, url=None):
         logging.error(rep['msg'])
 
 def generate_salt_key(_key, _t):
-    temp_key = _key + _t
+    temp_key = _key + str(_t)
     for i in range(5):
-        temp_key = str(base64.b32encode(temp_key[:10].encode('utf-8')))
-    return temp_key
+        temp_key = base64.b32encode(temp_key[:10].encode('utf-8')).decode('utf-8')
+    return temp_key[-11:]
 
 
 
