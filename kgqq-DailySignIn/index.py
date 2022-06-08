@@ -2,6 +2,7 @@ import base64
 import json
 import logging
 import os
+import hashlib
 import platform
 import time
 
@@ -34,11 +35,15 @@ def send(content, url=None):
     if rep['code'] != 200:
         logging.error(rep['msg'])
 
+
 def generate_salt_key(_key, _t):
+    def get_md5(s):
+        hl = hashlib.md5()
+        hl.update(s.encode('utf8'))
+        return hl.hexdigest()
+
     temp_key = _key + str(_t)
-    for i in range(5):
-        temp_key = base64.b32encode(temp_key[:10].encode('utf-8')).decode('utf-8')
-    return temp_key[-11:]
+    return get_md5(temp_key)[-11:]
 
 
 # 获取用户信息
