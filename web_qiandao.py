@@ -115,6 +115,7 @@ class web:
         except Exception as e:
             logging.error('错误类型是', e.__class__.__name__)
             logging.error('错误明细是', e)
+            logging.error('错误代码是', self.cmd)
             self.info = self.name + '：代码异常'
             logging.error(response.text)
         logging.info(self.info)
