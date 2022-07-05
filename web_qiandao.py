@@ -57,7 +57,6 @@ def generate_salt_key(_key, _t):
     return get_md5(temp_key)[-11:]
 
 
-
 class web:
     count = 0
 
@@ -130,6 +129,7 @@ def main_handler(event, context):
         return locals()[parma]
 
     desc = ''
+    error_msg = ''
     with open(config_path, encoding='utf-8') as f:
         data = json.load(f)
     i = 1
@@ -154,9 +154,14 @@ def main_handler(event, context):
         locals()['s' + str(j + 1)].run()
     logging.info('签到完成')
     for j in range(web.count):
-        desc = desc + locals()['s' + str(j + 1)].info + '\n'
+        if '异常' in locals()['s' + str(j + 1)].info:
+            error_msg = error_msg + locals()['s' + str(j + 1)].info + '\n'
+        else:
+            desc = desc + locals()['s' + str(j + 1)].info + '\n'
         del locals()['s' + str(j + 1)]
     send(desc)
+    if len(error_msg) != 0:
+        send(error_msg)
 
 
 if __name__ == '__main__':
