@@ -76,7 +76,7 @@ class User:
                 'coins': data['money'],  # 硬币数
                 'current_exp': level_info['current_exp'],
                 'next_exp': level_info['next_exp'],
-                'level_exp': '%d/%d' % (level_info['current_exp'], level_info['next_exp']),
+                'level_exp': f'{level_info["current_exp"]}/{level_info["next_exp"]}',
                 'vipType': data['vipType']
             }
             self.mid = data['mid']
@@ -309,8 +309,11 @@ class User:
         today_exp = self.Inquire_exp()
         if today_exp != -1:
             today_exp = 10 if today_exp == 0 else today_exp
-            is_exp = '今日获取经验值%d，升级预计还需%d天' % (
-                today_exp, int((userInfo['next_exp'] - userInfo['current_exp']) / today_exp))
+            if my_level != 6:
+                is_exp = '今日获取经验值%d，升级预计还需%d天' % (
+                    today_exp, int((userInfo['next_exp'] - userInfo['current_exp']) / today_exp))
+            else:
+                is_exp = '恭喜，您已满级。'
             logging.info(is_exp)
         else:
             is_exp = '未获取到今日经验值'
