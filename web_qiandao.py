@@ -1,8 +1,7 @@
-import base64
+import hashlib
 import json
 import logging
 import os
-import hashlib
 import platform
 import re
 import time
@@ -96,7 +95,7 @@ class web:
         try:
             response = self.my_requests()
             if system == 'Windows':
-                logging.debug(response.content.decode('utf-8'))
+                logging.debug(response.content.decode('gbk'))
             else:
                 logging.debug(response.text)
             if self.extra is not None:
@@ -159,7 +158,8 @@ def main_handler(event, context):
         else:
             desc = desc + locals()['s' + str(j + 1)].info + '\n'
         del locals()['s' + str(j + 1)]
-    send(desc)
+    if len(desc) != 0:
+        send(desc)
     if len(error_msg) != 0:
         send(error_msg)
 
